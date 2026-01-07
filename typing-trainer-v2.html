@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Trainer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 32px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .stat {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .controls select, .controls button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .controls select {
+            border: 2px solid #e0e0e0;
+            background: white;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .controls select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .controls button:hover {
+            background: #5a6fd6;
+        }
+
+        .controls button.secondary {
+            background: #6c757d;
+        }
+
+        .controls button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .text-display {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 24px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 1.25rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            min-height: 150px;
+            color: #666;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .text-display .char {
+            transition: color 0.1s;
+            display: inline;
+            word-break: break-word;
+        }
+
+        .text-display .char.correct {
+            color: #4ade80;
+        }
+
+        .text-display .char.incorrect {
+            color: #f87171;
+            text-decoration: underline;
+        }
+
+        .text-display .char.current {
+            background: rgba(102, 126, 234, 0.4);
+            border-radius: 2px;
+        }
+
+        .text-display .char.pending {
+            color: #888;
+        }
+
+        .input-area {
+            position: relative;
+        }
+
+        .typing-input {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .typing-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .typing-input:disabled {
+            background: #f0f0f0;
+            cursor: not-allowed;
+        }
+
+        .typing-input.error {
+            border-color: #f87171;
+            box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2);
+        }
+
+        .message {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .message.success {
+            background: #dcfce7;
+            color: #166534;
+            display: block;
+        }
+
+        .message h3 {
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.2s;
+        }
+
+        .instructions {
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 16px;
+        }
+
+        .custom-text-area {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .custom-text-area.visible {
+            display: block;
+        }
+
+        .custom-text-area textarea {
+            width: 100%;
+            padding: 12px;
+            font-size: 0.95rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+        }
+
+        .custom-text-area textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .session-stats {
+            background: #f0f4ff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #555;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .text-display {
+                font-size: 1rem;
+                padding: 16px;
+            }
+
+            .stat-value {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⌨️ Typing Trainer</h1>
+        <p class="subtitle">Improve your typing speed and accuracy</p>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value" id="wpm">0</div>
+                <div class="stat-label">WPM</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="accuracy">100%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="errors">0</div>
+                <div class="stat-label">Errors</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="time">0:00</div>
+                <div class="stat-label">Time</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <select id="difficulty">
+                <option value="beginner">Beginner - Home Row</option>
+                <option value="easy">Easy - Common Words</option>
+                <option value="medium" selected>Medium - Sentences</option>
+                <option value="hard">Hard - Complex Text</option>
+                <option value="business">Business Writing</option>
+                <option value="technology">Technology</option>
+                <option value="code">Code - Programming</option>
+                <option value="custom">Custom Text</option>
+            </select>
+            <button id="newText">New Text</button>
+            <button id="restart" class="secondary">Restart</button>
+        </div>
+
+        <div class="custom-text-area" id="customArea">
+            <textarea id="customText" placeholder="Enter your custom text here..."></textarea>
+        </div>
+
+        <div class="progress-bar">
+            <div class="fill" id="progress" style="width: 0%"></div>
+        </div>
+
+        <div class="text-display" id="textDisplay"></div>
+
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="typingInput" 
+                class="typing-input" 
+                placeholder="Click here and start typing..."
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+            >
+        </div>
+
+        <div class="message" id="message">
+            <h3>🎉 Excellent Work!</h3>
+            <p id="finalStats"></p>
+        </div>
+
+        <p class="instructions">Start typing to begin. Your stats will update in real-time.</p>
+
+        <div class="session-stats">
+            Session: <span id="sessionCount">0</span> exercises completed | 
+            Avg WPM: <span id="avgWpm">0</span> | 
+            Avg Accuracy: <span id="avgAccuracy">0</span>%
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // WORD BANKS FOR DYNAMIC SENTENCE GENERATION
+        // ============================================
+        
+        const wordBanks = {
+            // Home row practice patterns
+            homeRow: {
+                left: ['sad', 'dad', 'fad', 'add', 'ads', 'as', 'fa', 'da', 'sa'],
+                right: ['fall', 'hall', 'jab', 'lab', 'lag', 'lad', 'has', 'had', 'ash'],
+                both: ['flask', 'salad', 'shall', 'glass', 'slash', 'skill', 'staff', 'shall', 'flags']
+            },
+
+            // Common English words by frequency
+            commonWords: {
+                short: ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'oil', 'sit', 'set'],
+                medium: ['about', 'after', 'again', 'being', 'below', 'between', 'both', 'came', 'come', 'could', 'each', 'even', 'find', 'first', 'from', 'give', 'going', 'great', 'hand', 'have', 'here', 'high', 'just', 'know', 'last', 'left', 'life', 'line', 'little', 'long', 'look', 'made', 'make', 'many', 'more', 'most', 'much', 'must', 'name', 'need', 'never', 'next', 'number', 'only', 'other', 'over', 'part', 'place', 'point', 'right', 'same', 'seem', 'should', 'show', 'small', 'sound', 'still', 'such', 'take', 'tell', 'than', 'that', 'them', 'then', 'there', 'these', 'they', 'thing', 'think', 'this', 'time', 'under', 'very', 'want', 'water', 'well', 'went', 'were', 'what', 'when', 'where', 'which', 'while', 'will', 'with', 'word', 'work', 'world', 'would', 'write', 'year', 'your'],
+                longer: ['another', 'answer', 'because', 'before', 'believe', 'between', 'building', 'business', 'certain', 'change', 'children', 'complete', 'continue', 'control', 'country', 'develop', 'different', 'enough', 'example', 'family', 'follow', 'general', 'government', 'group', 'happen', 'history', 'however', 'important', 'include', 'increase', 'interest', 'large', 'later', 'learn', 'letter', 'light', 'likely', 'little', 'living', 'local', 'major', 'matter', 'means', 'member', 'might', 'million', 'moment', 'money', 'month', 'morning', 'mother', 'move', 'national', 'nothing', 'office', 'often', 'order', 'others', 'paper', 'people', 'perhaps', 'person', 'picture', 'piece', 'place', 'point', 'possible', 'power', 'present', 'president', 'problem', 'program', 'provide', 'public', 'question', 'quite', 'rather', 'read', 'reason', 'result', 'return', 'school', 'second', 'sense', 'service', 'several', 'side', 'simple', 'since', 'social', 'something', 'sometimes', 'start', 'state', 'story', 'student', 'study', 'system', 'table', 'taken', 'teacher', 'their', 'themselves', 'though', 'thought', 'three', 'through', 'today', 'together', 'toward', 'tried', 'true', 'turn', 'turned', 'understand', 'until', 'upon', 'using', 'usually', 'value', 'voice', 'watch', 'whether', 'white', 'whole', 'without', 'woman', 'women', 'working', 'written', 'wrong', 'young']
+            },
+
+            // Sentence templates and components
+            sentences: {
+                subjects: ['The team', 'Our company', 'The manager', 'A skilled worker', 'The project', 'Your colleague', 'The department', 'Every employee', 'The client', 'A good leader', 'The report', 'This meeting', 'The deadline', 'Our goal', 'The presentation', 'A strong team', 'The customer', 'Your feedback', 'The strategy', 'Our approach', 'The market', 'A clear plan', 'The data', 'This opportunity', 'The process', 'An effective method', 'The budget', 'Your proposal', 'The schedule', 'A detailed analysis', 'The solution', 'Our partnership', 'The results', 'A productive session', 'The guidelines', 'Your insights', 'The framework', 'An experienced professional', 'The outcome', 'Our commitment'],
+                
+                verbs: ['will help', 'should consider', 'needs to review', 'must complete', 'can improve', 'has shown', 'will demonstrate', 'requires attention', 'offers value', 'creates impact', 'drives results', 'supports growth', 'enables success', 'promotes efficiency', 'ensures quality', 'maintains standards', 'achieves goals', 'delivers results', 'builds trust', 'fosters collaboration', 'enhances performance', 'strengthens relationships', 'develops skills', 'increases productivity', 'reduces costs', 'maximizes potential', 'optimizes processes', 'streamlines operations', 'accelerates progress', 'transforms outcomes'],
+                
+                objects: ['the quarterly objectives', 'our business strategy', 'the project timeline', 'client expectations', 'team performance', 'market opportunities', 'operational efficiency', 'customer satisfaction', 'resource allocation', 'quality standards', 'professional development', 'strategic planning', 'effective communication', 'problem-solving skills', 'decision-making processes', 'innovative solutions', 'collaborative efforts', 'continuous improvement', 'sustainable growth', 'competitive advantage', 'organizational success', 'measurable outcomes', 'actionable insights', 'best practices', 'key performance indicators', 'stakeholder engagement', 'risk management', 'change initiatives', 'learning opportunities', 'career advancement'],
+                
+                connectors: ['while also considering', 'in addition to', 'as well as', 'along with', 'together with', 'combined with', 'in conjunction with', 'supported by', 'enhanced by', 'strengthened through'],
+                
+                endings: ['for better results.', 'in the coming quarter.', 'across all departments.', 'throughout the organization.', 'with measurable success.', 'for long-term growth.', 'in a timely manner.', 'with great efficiency.', 'to meet our targets.', 'for maximum impact.', 'with clear objectives.', 'through dedicated effort.', 'by working together.', 'with careful planning.', 'for sustainable progress.']
+            },
+
+            // Business-specific vocabulary
+            business: {
+                nouns: ['meeting', 'report', 'deadline', 'budget', 'strategy', 'proposal', 'presentation', 'client', 'stakeholder', 'revenue', 'profit', 'expense', 'investment', 'contract', 'agreement', 'negotiation', 'partnership', 'merger', 'acquisition', 'portfolio', 'benchmark', 'metric', 'target', 'objective', 'milestone', 'deliverable', 'asset', 'liability', 'equity', 'dividend', 'forecast', 'projection', 'analysis', 'assessment', 'evaluation', 'recommendation', 'implementation', 'optimization', 'automation', 'integration'],
+                
+                verbs: ['analyze', 'implement', 'optimize', 'leverage', 'facilitate', 'coordinate', 'delegate', 'prioritize', 'streamline', 'consolidate', 'evaluate', 'negotiate', 'collaborate', 'communicate', 'present', 'document', 'review', 'approve', 'allocate', 'distribute', 'manage', 'supervise', 'mentor', 'train', 'develop', 'enhance', 'improve', 'increase', 'reduce', 'minimize', 'maximize', 'achieve', 'accomplish', 'deliver', 'execute', 'finalize', 'complete', 'submit', 'process', 'resolve'],
+                
+                adjectives: ['strategic', 'operational', 'financial', 'quarterly', 'annual', 'comprehensive', 'detailed', 'preliminary', 'final', 'critical', 'essential', 'key', 'primary', 'secondary', 'internal', 'external', 'corporate', 'professional', 'efficient', 'effective', 'productive', 'profitable', 'sustainable', 'scalable', 'innovative', 'competitive', 'collaborative', 'proactive', 'responsive', 'flexible']
+            },
+
+            // Technology vocabulary
+            technology: {
+                nouns: ['database', 'server', 'network', 'software', 'hardware', 'application', 'interface', 'algorithm', 'framework', 'platform', 'system', 'module', 'component', 'function', 'variable', 'array', 'object', 'class', 'method', 'library', 'repository', 'branch', 'commit', 'deployment', 'integration', 'automation', 'pipeline', 'container', 'cluster', 'instance', 'endpoint', 'protocol', 'encryption', 'authentication', 'authorization', 'validation', 'configuration', 'optimization', 'debugging', 'testing'],
+                
+                verbs: ['develop', 'deploy', 'configure', 'implement', 'integrate', 'optimize', 'debug', 'test', 'validate', 'authenticate', 'authorize', 'encrypt', 'decrypt', 'compile', 'execute', 'initialize', 'instantiate', 'iterate', 'refactor', 'migrate', 'scale', 'monitor', 'analyze', 'troubleshoot', 'resolve', 'update', 'upgrade', 'patch', 'backup', 'restore', 'sync', 'merge', 'branch', 'commit', 'push', 'pull', 'clone', 'fork', 'review', 'approve'],
+                
+                adjectives: ['scalable', 'reliable', 'secure', 'efficient', 'responsive', 'robust', 'flexible', 'modular', 'distributed', 'centralized', 'automated', 'manual', 'synchronous', 'asynchronous', 'parallel', 'sequential', 'recursive', 'iterative', 'dynamic', 'static', 'public', 'private', 'protected', 'encrypted', 'compressed', 'cached', 'optimized', 'deprecated', 'legacy', 'modern']
+            },
+
+            // Programming code snippets
+            code: {
+                javascript: [
+                    'const result = array.filter(item => item.active);',
+                    'function handleClick(event) { event.preventDefault(); }',
+                    'const { name, email, age } = userData;',
+                    'return items.map((item, index) => ({ ...item, id: index }));',
+                    'async function fetchData(url) { return await fetch(url).then(r => r.json()); }',
+                    'const sum = numbers.reduce((acc, num) => acc + num, 0);',
+                    'if (isValid && hasPermission) { processRequest(); }',
+                    'const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name));',
+                    'useEffect(() => { loadData(); return () => cleanup(); }, [dependency]);',
+                    'const unique = [...new Set(array)];',
+                    'try { await saveData(payload); } catch (err) { handleError(err); }',
+                    'const formatted = date.toISOString().split("T")[0];',
+                    'Object.keys(config).forEach(key => validate(config[key]));',
+                    'const merged = { ...defaults, ...userSettings };',
+                    'export default function Component({ children, className }) { }',
+                    'const debounced = useMemo(() => debounce(handler, 300), []);',
+                    'const [state, setState] = useState({ loading: true, data: null });',
+                    'router.get("/api/users/:id", authenticate, getUser);',
+                    'const isMatch = /^[a-zA-Z0-9]+$/.test(input);',
+                    'Promise.all(requests).then(results => processAll(results));'
+                ],
+                python: [
+                    'def calculate_total(items): return sum(item.price for item in items)',
+                    'results = [x for x in data if x.is_valid and x.score > threshold]',
+                    'with open("config.json", "r") as file: config = json.load(file)',
+                    'class DataProcessor: def __init__(self, source): self.source = source',
+                    'async def fetch_records(session, url): return await session.get(url)',
+                    'filtered = list(filter(lambda x: x.active, records))',
+                    'try: result = process(data) except ValueError as e: log_error(e)',
+                    'response = requests.post(endpoint, json=payload, headers=headers)',
+                    'df = pd.DataFrame(records).groupby("category").agg({"value": "sum"})',
+                    'sorted_items = sorted(items, key=lambda x: x.priority, reverse=True)',
+                    '@decorator def wrapped_function(*args, **kwargs): pass',
+                    'env_value = os.environ.get("API_KEY", default_value)',
+                    'merged = {**dict_one, **dict_two, "override": new_value}',
+                    'if __name__ == "__main__": main()',
+                    'unique_values = set(item.category for item in collection)'
+                ],
+                sql: [
+                    'SELECT name, email FROM users WHERE status = "active" ORDER BY created_at;',
+                    'INSERT INTO orders (user_id, total, status) VALUES (?, ?, "pending");',
+                    'UPDATE products SET price = price * 1.1 WHERE category = "electronics";',
+                    'DELETE FROM sessions WHERE expires_at < NOW();',
+                    'SELECT u.name, COUNT(o.id) FROM users u LEFT JOIN orders o ON u.id = o.user_id GROUP BY u.id;',
+                    'CREATE INDEX idx_users_email ON users(email);',
+                    'ALTER TABLE customers ADD COLUMN phone VARCHAR(20);',
+                    'SELECT * FROM products WHERE price BETWEEN 10 AND 100 LIMIT 50;',
+                    'SELECT DISTINCT category FROM products WHERE stock > 0;',
+                    'SELECT AVG(price), MAX(price), MIN(price) FROM products GROUP BY category;'
+                ]
+            }
+        };
+
+        // Pre-written sentences for variety
+        const staticSentences = {
+            medium: [
+                "The ability to type quickly and accurately is essential for modern work environments.",
+                "Practice makes perfect when it comes to developing strong keyboard skills.",
+                "Clear communication through writing helps convey ideas effectively to others.",
+                "Taking the time to proofread your work can prevent embarrassing mistakes.",
+                "A well-organized document reflects professionalism and attention to detail.",
+                "Technology continues to change how we interact with information daily.",
+                "Learning new skills requires patience, dedication, and consistent practice.",
+                "The best way to improve is to challenge yourself with increasingly difficult tasks.",
+                "Efficiency in typing allows you to focus more on the content of your message.",
+                "Regular breaks during extended typing sessions help prevent strain and fatigue.",
+                "Good posture while typing reduces the risk of repetitive strain injuries.",
+                "The keyboard remains one of the most important tools for digital communication.",
+                "Speed and accuracy should be balanced for optimal typing performance.",
+                "Many jobs today require strong computer skills including proficient typing.",
+                "Your typing speed can significantly impact your overall productivity at work.",
+                "Professional emails require careful attention to tone, grammar, and clarity.",
+                "The digital age demands that we constantly adapt to new technologies.",
+                "Effective written communication is valued across all industries and professions.",
+                "Taking online courses can help you develop new skills from the comfort of home.",
+                "Time management becomes easier when you can type your thoughts quickly.",
+                "The modern workplace relies heavily on digital tools and written communication.",
+                "Building muscle memory for typing takes time but pays off in the long run.",
+                "Accurate typing reduces the need for corrections and saves valuable time.",
+                "Many successful professionals attribute part of their success to strong typing skills.",
+                "The internet has made written communication more important than ever before.",
+                "Quality work often depends on the ability to express ideas clearly in writing.",
+                "Developing expertise in any skill requires thousands of hours of practice.",
+                "Your ability to communicate effectively can open doors to new opportunities.",
+                "Continuous learning is the key to staying relevant in a changing job market.",
+                "Small improvements in typing speed can add up to significant time savings."
+            ],
+            hard: [
+                "The implementation of comprehensive quality assurance protocols ensures consistent delivery of exceptional products and services to discerning customers worldwide.",
+                "Analyzing market trends and consumer behavior patterns provides valuable insights for developing targeted marketing strategies that resonate with specific demographic segments.",
+                "Effective leadership requires the ability to inspire, motivate, and guide team members toward achieving organizational objectives while fostering a positive work environment.",
+                "The integration of artificial intelligence and machine learning technologies is transforming industries by automating complex processes and enabling data-driven decision making.",
+                "Sustainable business practices not only benefit the environment but also contribute to long-term profitability by reducing operational costs and enhancing brand reputation.",
+                "Cross-functional collaboration between departments facilitates knowledge sharing or breaks down silos that can impede organizational efficiency and innovation.",
+                "Strategic planning involves setting clear objectives, identifying potential challenges, allocating resources effectively, and establishing metrics for measuring progress and success.",
+                "The globalization of markets has created both opportunities and challenges for businesses seeking to expand their reach and compete on an international scale.",
+                "Developing a comprehensive understanding of financial statements enables managers to make informed decisions about resource allocation and investment priorities.",
+                "Effective communication skills encompass not only the ability to articulate ideas clearly but also active listening, empathy, and adaptability to different audiences.",
+                "The rapid pace of technological advancement necessitates continuous learning and professional development to maintain competitiveness in the evolving job market.",
+                "Risk management strategies help organizations identify potential threats, assess their likelihood and impact, and implement appropriate mitigation measures.",
+                "Customer relationship management systems enable businesses to track interactions, analyze preferences, and deliver personalized experiences that build loyalty.",
+                "The principles of project management provide a structured framework for planning, executing, and controlling initiatives to achieve specific goals within defined constraints.",
+                "Organizational culture significantly influences employee engagement, productivity, and retention, making it a critical factor in achieving sustainable business success."
+            ],
+            business: [
+                "Please review the attached quarterly report and provide your feedback before the board meeting scheduled for next Thursday.",
+                "We need to schedule a follow-up meeting with the client to discuss the revised project timeline and updated budget projections.",
+                "The marketing team has proposed several new initiatives to increase brand awareness and drive customer engagement across digital channels.",
+                "Our analysis indicates that implementing the proposed changes could result in significant cost savings over the next fiscal year.",
+                "I would like to schedule a brief call to discuss the status of our ongoing projects and address any concerns you may have.",
+                "The human resources department has announced new policies regarding remote work arrangements and flexible scheduling options.",
+                "Please ensure all expense reports are submitted by the end of the month to allow sufficient time for processing and reimbursement.",
+                "We are pleased to announce that the company has exceeded its sales targets for the third consecutive quarter.",
+                "The strategic partnership with our new vendor will enable us to offer enhanced services to our existing customer base.",
+                "Management has approved the budget allocation for the proposed training program aimed at developing employee leadership skills.",
+                "Our customer satisfaction survey results indicate areas where we can improve our service delivery and response times.",
+                "The annual performance review process will begin next month, and managers should prepare documentation for their direct reports.",
+                "We are seeking qualified candidates for several open positions in our expanding technology and operations departments.",
+                "The revised contract terms have been reviewed by our legal team and are ready for final approval and signature.",
+                "Please coordinate with the facilities team to arrange appropriate meeting room reservations for the upcoming client visit.",
+                "The executive committee has approved the proposed expansion plan, and implementation will begin in the first quarter.",
+                "Our competitive analysis reveals opportunities to differentiate our products through enhanced features and improved customer support.",
+                "The finance department requires all departments to submit their annual budget proposals by the specified deadline.",
+                "We appreciate your continued dedication to maintaining the highest standards of quality in all aspects of our operations.",
+                "The project management office has developed new templates and guidelines to streamline our proposal development process."
+            ],
+            technology: [
+                "The development team has implemented a new continuous integration pipeline that automatically runs tests and deploys code to staging environments.",
+                "Our cloud infrastructure has been migrated to a containerized architecture using Docker and Kubernetes for improved scalability and reliability.",
+                "The security audit identified several vulnerabilities that require immediate attention, including outdated dependencies and insufficient access controls.",
+                "We are evaluating several machine learning frameworks to determine which best suits our requirements for predictive analytics applications.",
+                "The database optimization project has resulted in significant performance improvements, reducing average query response times by forty percent.",
+                "Our mobile application has been updated to support the latest operating system versions and includes several new features requested by users.",
+                "The API documentation has been completely rewritten to provide clearer examples and more comprehensive coverage of available endpoints.",
+                "We have implemented multi-factor authentication across all critical systems to enhance security and protect sensitive user data.",
+                "The network infrastructure upgrade includes new switches, routers, and firewalls capable of supporting increased bandwidth requirements.",
+                "Our monitoring and alerting system has been configured to automatically notify the on-call team when critical thresholds are exceeded.",
+                "The software architecture review identified opportunities to refactor legacy components and improve overall system maintainability.",
+                "We are adopting an agile development methodology with two-week sprints and daily standups to improve team collaboration and delivery speed.",
+                "The data warehouse has been restructured to support more efficient reporting and enable self-service analytics for business users.",
+                "Our disaster recovery plan includes automated backups, geographic redundancy, and documented procedures for various failure scenarios.",
+                "The user interface redesign focuses on improving accessibility, reducing cognitive load, and creating a more intuitive navigation experience."
+            ]
+        };
+
+        // ============================================
+        // SENTENCE GENERATION FUNCTIONS
+        // ============================================
+
+        function getRandomElement(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function generateHomeRowText() {
+            const patterns = [
+                ...wordBanks.homeRow.left,
+                ...wordBanks.homeRow.right,
+                ...wordBanks.homeRow.both
+            ];
+            return shuffleArray(patterns).slice(0, 8).join(' ');
+        }
+
+        function generateEasyText() {
+            const words = [
+                ...wordBanks.commonWords.short,
+                ...wordBanks.commonWords.medium.slice(0, 30)
+            ];
+            return shuffleArray(words).slice(0, 12).join(' ');
+        }
+
+        function generateMediumSentence() {
+            // 70% chance of using a pre-written sentence, 30% generated
+            if (Math.random() < 0.7) {
+                return getRandomElement(staticSentences.medium);
+            }
+            
+            const templates = wordBanks.sentences;
+            const subject = getRandomElement(templates.subjects);
+            const verb = getRandomElement(templates.verbs);
+            const object = getRandomElement(templates.objects);
+            const ending = getRandomElement(templates.endings);
+            
+            return `${subject} ${verb} ${object} ${ending}`;
+        }
+
+        function generateHardText() {
+            // 80% pre-written for quality, 20% generated
+            if (Math.random() < 0.8) {
+                return getRandomElement(staticSentences.hard);
+            }
+            
+            const templates = wordBanks.sentences;
+            const subject1 = getRandomElement(templates.subjects);
+            const verb1 = getRandomElement(templates.verbs);
+            const object1 = getRandomElement(templates.objects);
+            const connector = getRandomElement(templates.connectors);
+            const object2 = getRandomElement(templates.objects);
+            const ending = getRandomElement(templates.endings);
+            
+            return `${subject1} ${verb1} ${object1} ${connector} ${object2} ${ending}`;
+        }
+
+        function generateBusinessText() {
+            // Mix of pre-written and generated
+            if (Math.random() < 0.75) {
+                return getRandomElement(staticSentences.business);
+            }
+            
+            const vocab = wordBanks.business;
+            const adj = getRandomElement(vocab.adjectives);
+            const noun1 = getRandomElement(vocab.nouns);
+            const verb = getRandomElement(vocab.verbs);
+            const noun2 = getRandomElement(vocab.nouns);
+            
+            const templates = [
+                `The ${adj} ${noun1} will ${verb} the ${noun2} before the deadline.`,
+                `Please ${verb} the ${adj} ${noun1} and submit your ${noun2} by Friday.`,
+                `Our team needs to ${verb} the ${noun1} to improve our ${adj} ${noun2}.`,
+                `The ${noun1} shows that we should ${verb} our approach to the ${noun2}.`
+            ];
+            
+            return getRandomElement(templates);
+        }
+
+        function generateTechnologyText() {
+            if (Math.random() < 0.75) {
+                return getRandomElement(staticSentences.technology);
+            }
+            
+            const vocab = wordBanks.technology;
+            const adj = getRandomElement(vocab.adjectives);
+            const noun1 = getRandomElement(vocab.nouns);
+            const verb = getRandomElement(vocab.verbs);
+            const noun2 = getRandomElement(vocab.nouns);
+            
+            const templates = [
+                `The ${adj} ${noun1} needs to ${verb} with the ${noun2} module.`,
+                `We should ${verb} the ${noun1} to ensure ${adj} ${noun2} performance.`,
+                `The ${noun1} configuration must ${verb} the ${adj} ${noun2} settings.`,
+                `After you ${verb} the ${noun1}, check the ${adj} ${noun2} status.`
+            ];
+            
+            return getRandomElement(templates);
+        }
+
+        function generateCodeText() {
+            const codeTypes = ['javascript', 'python', 'sql'];
+            const selectedType = getRandomElement(codeTypes);
+            return getRandomElement(wordBanks.code[selectedType]);
+        }
+
+        function getText(difficulty) {
+            switch (difficulty) {
+                case 'beginner':
+                    return generateHomeRowText();
+                case 'easy':
+                    return generateEasyText();
+                case 'medium':
+                    return generateMediumSentence();
+                case 'hard':
+                    return generateHardText();
+                case 'business':
+                    return generateBusinessText();
+                case 'technology':
+                    return generateTechnologyText();
+                case 'code':
+                    return generateCodeText();
+                case 'custom':
+                    const customText = customTextArea.value.trim();
+                    return customText || "Please enter custom text above.";
+                default:
+                    return generateMediumSentence();
+            }
+        }
+
+        // ============================================
+        // TYPING TRAINER LOGIC
+        // ============================================
+
+        let currentText = "";
+        let currentIndex = 0;
+        let errors = 0;
+        let totalKeystrokes = 0;
+        let startTime = null;
+        let timerInterval = null;
+        let isComplete = false;
+
+        // Session tracking
+        let sessionResults = [];
+
+        const textDisplay = document.getElementById('textDisplay');
+        const typingInput = document.getElementById('typingInput');
+        const wpmDisplay = document.getElementById('wpm');
+        const accuracyDisplay = document.getElementById('accuracy');
+        const errorsDisplay = document.getElementById('errors');
+        const timeDisplay = document.getElementById('time');
+        const progressBar = document.getElementById('progress');
+        const difficultySelect = document.getElementById('difficulty');
+        const newTextBtn = document.getElementById('newText');
+        const restartBtn = document.getElementById('restart');
+        const messageDiv = document.getElementById('message');
+        const finalStats = document.getElementById('finalStats');
+        const customArea = document.getElementById('customArea');
+        const customTextArea = document.getElementById('customText');
+        const sessionCount = document.getElementById('sessionCount');
+        const avgWpm = document.getElementById('avgWpm');
+        const avgAccuracy = document.getElementById('avgAccuracy');
+
+        function renderText() {
+            textDisplay.innerHTML = currentText.split('').map((char, index) => {
+                let className = 'char';
+                if (index < currentIndex) {
+                    const typed = typingInput.value[index];
+                    className += typed === char ? ' correct' : ' incorrect';
+                } else if (index === currentIndex) {
+                    className += ' current pending';
+                } else {
+                    className += ' pending';
+                }
+                const displayChar = char === ' ' ? ' ' : char;
+                return `<span class="${className}">${displayChar}</span>`;
+            }).join('');
+        }
+
+        function updateStats() {
+            if (!startTime) return;
+
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const minutes = elapsedTime / 60;
+            
+            const wordsTyped = currentIndex / 5;
+            const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
+            
+            const accuracy = totalKeystrokes > 0 
+                ? Math.round(((totalKeystrokes - errors) / totalKeystrokes) * 100) 
+                : 100;
+
+            wpmDisplay.textContent = wpm;
+            accuracyDisplay.textContent = accuracy + '%';
+            errorsDisplay.textContent = errors;
+            
+            const progress = (currentIndex / currentText.length) * 100;
+            progressBar.style.width = progress + '%';
+        }
+
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateSessionStats() {
+            sessionCount.textContent = sessionResults.length;
+            
+            if (sessionResults.length > 0) {
+                const totalWpm = sessionResults.reduce((sum, r) => sum + r.wpm, 0);
+                const totalAcc = sessionResults.reduce((sum, r) => sum + r.accuracy, 0);
+                avgWpm.textContent = Math.round(totalWpm / sessionResults.length);
+                avgAccuracy.textContent = Math.round(totalAcc / sessionResults.length);
+            }
+        }
+
+        function completeTest() {
+            isComplete = true;
+            clearInterval(timerInterval);
+            typingInput.disabled = true;
+            
+            const elapsedTime = (Date.now() - startTime) / 1000;
+            const minutes = elapsedTime / 60;
+            const wordsTyped = currentText.length / 5;
+            const finalWpm = Math.round(wordsTyped / minutes);
+            const finalAccuracy = totalKeystrokes > 0 
+                ? Math.round(((totalKeystrokes - errors) / totalKeystrokes) * 100) 
+                : 100;
+
+            // Store session result
+            sessionResults.push({ wpm: finalWpm, accuracy: finalAccuracy });
+            updateSessionStats();
+
+            finalStats.textContent = `Final Speed: ${finalWpm} WPM | Accuracy: ${finalAccuracy}% | Time: ${timeDisplay.textContent}`;
+            messageDiv.classList.add('success');
+        }
+
+        function resetTest() {
+            currentIndex = 0;
+            errors = 0;
+            totalKeystrokes = 0;
+            startTime = null;
+            isComplete = false;
+            
+            clearInterval(timerInterval);
+            
+            typingInput.value = '';
+            typingInput.disabled = false;
+            typingInput.classList.remove('error');
+            
+            wpmDisplay.textContent = '0';
+            accuracyDisplay.textContent = '100%';
+            errorsDisplay.textContent = '0';
+            timeDisplay.textContent = '0:00';
+            progressBar.style.width = '0%';
+            
+            messageDiv.classList.remove('success');
+            
+            renderText();
+            typingInput.focus();
+        }
+
+        function loadNewText() {
+            currentText = getText(difficultySelect.value);
+            resetTest();
+        }
+
+        function handleInput(e) {
+            if (isComplete) return;
+
+            const typed = typingInput.value;
+            
+            if (!startTime && typed.length > 0) {
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+
+            const newIndex = typed.length;
+            
+            if (newIndex > currentIndex) {
+                totalKeystrokes++;
+                const typedChar = typed[newIndex - 1];
+                const expectedChar = currentText[newIndex - 1];
+                
+                if (typedChar !== expectedChar) {
+                    errors++;
+                    typingInput.classList.add('error');
+                    setTimeout(() => typingInput.classList.remove('error'), 150);
+                }
+            }
+
+            currentIndex = newIndex;
+            renderText();
+            updateStats();
+
+            if (currentIndex >= currentText.length) {
+                completeTest();
+            }
+        }
+
+        typingInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+
+        typingInput.addEventListener('input', handleInput);
+        
+        newTextBtn.addEventListener('click', loadNewText);
+        restartBtn.addEventListener('click', resetTest);
+        
+        difficultySelect.addEventListener('change', () => {
+            if (difficultySelect.value === 'custom') {
+                customArea.classList.add('visible');
+            } else {
+                customArea.classList.remove('visible');
+            }
+            loadNewText();
+        });
+
+        customTextArea.addEventListener('input', () => {
+            if (difficultySelect.value === 'custom') {
+                loadNewText();
+            }
+        });
+
+        // Initialize
+        loadNewText();
+    </script>
+</body>
+</html>
